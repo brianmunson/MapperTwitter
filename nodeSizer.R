@@ -1,18 +1,19 @@
 nodeSizer <- function(mapper_object, method = "linear"){
     node_size_vec <- sapply(mapper_object$points_in_vertex, length)
+    uniform <- function(x) { 5 }
     no_scale <- function(x) { x }
     lin_scale <- function(x) { x/min(node_size_vec) }
     log_scale <- function(x) { 4*log(x+1) }
     sqrt_scale <- function(x) { sqrt(x) }
-    func_list <- list(no_scale, lin_scale, log_scale, sqrt_scale)
-    names(func_list) <- c("unscaled", "linear", "logarithmic", "square root")
+    func_list <- list(uniform, no_scale, lin_scale, log_scale, sqrt_scale)
+    names(func_list) <- c("uniform", "unscaled", "linear", "logarithmic", "square root")
     return(sapply(node_size_vec, function(x) { func_list[[method]](x) }))
 }
 # Creates a vector of node sizes, one for each vertex in mapper object.
 # Args:
 #   mapper_object: output of mapper1D, mapper2D, or mapper
 #   method: how to scale, default is linear, options are
-#   "unscaled", "linear", "logarithmic", "square root"
+#   "uniform", "unscaled", "linear", "logarithmic", "square root"
 # Rewritten from old version below to use with networkD3
 
 # old version, may be better for using with igraph and oridnary plot:

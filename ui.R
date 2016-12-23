@@ -1,12 +1,9 @@
-library(shiny)
-require(TDAmapper)
-require(igraph)
-require(RColorBrewer)
+require(shiny)
+# require(TDAmapper)
+# require(igraph)
+# require(RColorBrewer)
 require(shinythemes)
 require(networkD3)
-
-# setwd("~/Documents/R/Shiny/App-1")
-# data <- read.csv("cc_samp_norm.csv", header = TRUE, as.is = TRUE)
 
 # Define UI for application that draws a histogram
 shinyUI(fluidPage(
@@ -14,9 +11,7 @@ shinyUI(fluidPage(
     # does not seem to work when choosing colourScale
     titlePanel("Mapper Explorer"),
     
-    forceNetworkOutput("mapper_graph"),
-    
-    # plotOutput("mapper_graph"),
+    forceNetworkOutput("graph"),
     
     hr(),
     
@@ -34,15 +29,14 @@ shinyUI(fluidPage(
                ),
         column(3,
                h3("Node attributes"),
-               checkboxInput("node_size", "Check to scale nodes to size",
-                             value = TRUE),
+               selectInput("node_size", "Select node sizing method",
+                          c("uniform", "unscaled", "linear", "logarithmic", "square root"),
+                          selected = "linear"),
                selectInput("color_filter", "Choose a color filter",
                            c("PC1" = "V1", "PC2" = "V2", "Amount", "Chebyshev", "Fraud" = "Class")),
                selectInput("coloring", "Choose a coloring style", 
                            c("Spectral", "Hot", "Cool", "Blue-Red",
                              "Blues", "Magenta-Green", "Easter"))
-               # sliderInput("num_colors", "Number of colors",
-               #             min = 2, max = 10, value = 10, step = 1),
                
                ),
         column(3,
