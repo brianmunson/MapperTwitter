@@ -1,3 +1,6 @@
+# UNNECESSARY: it seems after all that igraph_to_networkD3 does in
+# fact correctly do the indexing, although it is confusing reading
+# the code and looking at the objects themselves.
 mapperigraphToD3 <- function(mapper_object){
     require(igraph)
     require(networkD3)
@@ -19,3 +22,5 @@ mapperigraphToD3 <- function(mapper_object){
 #   mapper_object, output of TDAmapper
 # Returns:
 #   networkD3 object
+# to plot resulting network:
+# 

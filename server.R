@@ -48,11 +48,11 @@ shinyServer(function(input, output) {
         wc <- cluster_walktrap(mapper_graph)
         members <- membership(wc)
         mapper_d3 <- igraph_to_networkD3(mapper_graph, group = members)
-        mapper_d3$links <- mapper_d3$links - 1
-        # change to zero indexing
-        mapper_d3$nodes$name <- as.factor(seq(from = 0, by = 1,
-                                              length.out = length(mapper_d3$nodes$name)))
-        # change to zero indexing; name is stored as a factor in original object
+        # mapper_d3$links <- mapper_d3$links - 1
+        # # change to zero indexing
+        # mapper_d3$nodes$name <- as.factor(seq(from = 0, by = 1,
+        #                                       length.out = length(mapper_d3$nodes$name)))
+        # # change to zero indexing; name is stored as a factor in original object
         node_sizes <- nodeSizer(mapperObj(), input$node_size)
         mapper_d3$nodes['size'] = node_sizes
         # node sizing. make optional with selectInput box

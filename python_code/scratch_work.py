@@ -16,6 +16,9 @@ consumer_key = os.environ.get("TW_CONSUMER")
 consumer_secret = os.environ.get("TW_CONSUMER_SECRET")
 access_token = os.environ.get("TW_ACCESS")
 access_token_secret = os.environ.get("TW_ACCESS_SECRET")
+auth = ty.OAuthHandler(consumer_key, consumer_secret)
+auth.set_access_token(access_token, access_token_secret)
+api = ty.API(auth)
 
 #### yweather get WOEID function. No API keys required.
 #### Useful for working with trends by location, which requires WOEID
@@ -76,4 +79,92 @@ US_hashtags_df = US_trends_df[idx]
 # subsetting the trends dataframe
 US_hashtags_df_sorted = US_hashtags_df[['name', 'tweet_volume']].sort_values(by=["tweet_volume"],
 ascending = False)
-# sorts according to tweet volume.     
+# sorts according to tweet volume.
+
+#### getting streaming API stuff set up. pythoncentral.io helped here.
+# i still don't totally understand classes though.
+
+
+from tweepy.streaming import StreamListener
+
+class StdOutListener(StreamListener):
+
+    def on_data(self, data):
+        print(data)
+        return True
+
+    def on_error(self, status):
+        print(status)
+
+if __name__ == '__main__':
+
+    l = StdOutListener()
+    consumer_key = os.environ.get("TW_CONSUMER")
+    consumer_secret = os.environ.get("TW_CONSUMER_SECRET")
+    access_token = os.environ.get("TW_ACCESS")
+    access_token_secret = os.environ.get("TW_ACCESS_SECRET")
+    auth = ty.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
+    stream = ty.Stream(auth, l)
+
+    stream.filter(track=["string1", "string2"])
+    # filters to track by string1, string2. can enter a longer list as well.
+    # stop program with Ctrl-C
+    # to run, from command line: python file_name.py > twitter_data.text
+    # here file_name is the name of the file containing this listener
+
+
+
+
+# a slightly more complex listener
+class StdOutListener(StreamListener):
+    """ handles data received from the stream """
+
+    def on_status(self, status):
+        # prints text of tweet
+        try:
+            print("Tweet text "+ status.text)
+            print('\n %s %s via %s\n', (status.author.screen_name, status.created_at,
+            status.source))
+        except:
+            # ignore printing errors to console
+            pass
+
+        # for hashtag in status.entries['hashtags']:
+        #     # prints content of hashtag
+        #     print(hashtag['text'])
+        # not sure about this. I think I should wait until I get the tweets to process
+
+        return True
+
+    def on_error(self, status_code):
+        print("Error with status code %s ", status_code)
+        return True # continues listening
+
+    def on_timeout(self):
+        print("Timeout...")
+        return True # continues listening
+
+def main():
+    # credentialing
+    consumer_key = os.environ.get("TW_CONSUMER")
+    consumer_secret = os.environ.get("TW_CONSUMER_SECRET")
+    access_token = os.environ.get("TW_ACCESS")
+    access_token_secret = os.environ.get("TW_ACCESS_SECRET")
+    auth = ty.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
+    stream = ty.Stream(auth, StreamWatcherListener(), timeout = None)
+    stream.sample() # i think i want to use stream.filter and enter a list of
+    # strings to track
+
+if __name__ == '__main__':
+    listener = StdOutListener()
+    auth = ty.OAuthHandler(consumer_key, consumer_secret)
+    auth.set_access_token(access_token, access_token_secret)
+
+    stream = Stream(auth, listener)
+    stream.filter(track=["string1", "string2"])
+    # tracks various strings. here is a good place to feed a list of trends
+    # you've gotten from getting those trends.
+
+####
