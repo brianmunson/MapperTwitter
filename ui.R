@@ -30,7 +30,8 @@ shinyUI(fluidPage(
                            c("uniform", "unscaled", "linear", "logarithmic", "square root"),
                            selected = "linear"),
                selectInput("color_filter", "Choose a color filter",
-                           c("PC1" = "V1", "PC2" = "V2", "Amount", "Chebyshev", "Fraud" = "Class")),
+                           c("friends" = "friends_count", "followers" = "followers_count",
+                             "favorites" = "favourites_count")),
                selectInput("coloring", "Choose a coloring style", 
                            c("Spectral", "Hot", "Cool", "Blue-Red",
                              "Blues", "Magenta-Green", "Easter"))
@@ -40,9 +41,10 @@ shinyUI(fluidPage(
         column(4,
                h3("Metric"),
                selectInput("metric", "Choose a metric", 
-                           c("Euclidean" = "euclidean", "Manhattan" = "manhattan")),
+                           c("2-dist" = "twoDist", "Jaccard" = "jacDist")),
                selectInput("filter", "Choose a filter", 
-                           c("PC1" = "V1", "PC2" = "V2", "Amount", "Chebyshev"))
+                           c("friends" = "friends_count", "followers" = "followers_count",
+                             "favorites" = "favourites_count"))
                ),
         
         column(4,

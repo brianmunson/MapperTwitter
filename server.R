@@ -4,26 +4,65 @@ require(shinythemes)
 require(networkD3)
 # require(colorRamps) #necessary?
 # require(RColorBrewer) #necessary?
-
+require(ROAuth)
+require(twitteR) # may not need
+require(httr)
+require(streamR)
+require(stringr) # may not need
+# for twitter and parsing strings
 
 source("nodeSizer.R")
 source("densMapperVec.R")
 source("colorPaletteList.R")
 source("vertexSelector.R")
 source("chebyFilter.R")
-source("mapperigraphToD3.R") #currently not implemented; something not working
+source("jacDist.R")
+source("twoDist.R")
+source("distMatrix.R")
+source("hashSelector.R") # has a "subset" "intersect" option, implement for user?
+source("streamRHashTweetVec.R")
+source("streamRHashTweetList.R")
+source("hashTweetList.R")
+source("hashTopNList.R")
 
-data <- read.csv("cc_samp_norm.csv", header = TRUE, as.is = TRUE)
+twitter_df <- read.csv("twitter_sample.csv", header = TRUE, 
+                       as.is = TRUE, fileEncoding="latin1")
+# will be a sample of tweetsAConcat from twitterHashProject
+# will have to write separate code to ingest and process it to 
+# a nice csv which will read in as a data frame.
+# fileEncoding = "latin1" seems to help prevent 
+# "invalid multibyte string" errors.
+tweetsHashList <- streamRHashTweetVec(twitter_df)
+topHashes <- hashTopNList(tweetsHashList, 20)
+hashSelected <- hashSelector(tweetsHashList, topHashes[[1]], method = "subset")
+
+
+# except for the reading of the .csv, most (all?) of the above processing
+# should be done outside of this app. for example, even though
+# hashSelector takes a method argument, you could still allow the user
+# to utilize it by doing all possible computations ahead of time
+# and then allowing them to choose between already computed data.
+# for instance, for the topnhashes, you could add another data frame
+# to load in which simply has the hashtags and their frequencies.
+# this could be easily filtered. In fact, the hashTopNList basically
+# does this already.
+
+
+# is this the right function, or is it streamRHashTweetList?
+hashVecList <- ???????????????
+# needs to be processed
 
 # Define server logic
 shinyServer(function(input, output) {
     distMat <- reactive({
-        dist_obj <- dist(data, method = input$metric)
+        dist_obj <- distMatrix(input$metric, hashVecList)
+        # hashVecList needs to be processed from the data
     })
     
     filterObj <- reactive({
         if(input$filter %in% colnames(data)){
             filter_obj <- data[,input$filter]
+            # perhaps variance normalize?
         }
         else{
             filter_obj <- chebyFilter(dist_obj)
@@ -77,42 +116,3 @@ shinyServer(function(input, output) {
                      
     })
     # try to cut down amount of code in renderForceNetwork
-    
-    # OLD NON-INTERACTIVE METHOD:
-    # output$mapper_graph <- renderPlot({
-    #     dist_obj <- dist(data, method = input$metric)
-    #     if(input$filter %in% colnames(data)){
-    #         filter_obj <- data[,input$filter]
-    #     }
-    #     else{
-    #         filter_obj <- chebyFilter(dist_obj)
-    #     }
-    #     mapper_object <- mapper1D(distance_matrix = dist_obj,
-    #                               filter_value = filter_obj,
-    #                               num_intervals = input$num_intervals,
-    #                               percent_overlap = input$percent_overlap,
-    #                               num_bins_when_clustering = input$num_bins_when_clustering)
-    #     mapper_graph <- graph.adjacency(mapper_object$adjacency, mode = "undirected")
-    #     
-        # if(input$color_filter %in% colnames(data)){
-        #     dens_vec <- densMapperVec(mapper_object, data[,input$color_filter])
-        # }
-        # else{
-        #     cheby_filter <- chebyFilter(dist_obj)
-        #     dens_vec <- densMapperVec(mapper_object, cheby_filter)
-        # }
-        # color_vec <- densColorVec(dens_vec, input$num_colors, "Spectral")
-        # node_sizes <- nodeSizer(mapper_object$points_in_vertex, "concave down")
-        # V(mapper_graph)$size <- node_sizes
-        # V(mapper_graph)$color <- color_vec
-        # plot(mapper_graph, vertex.label=NA)
-        
-   # })
-
-    
-})
-
-# see http://shiny.rstudio.com/gallery/file-upload.html for file
-# upload option.
-# think about allowing user to save the image. saveNetwork in the 
-# networkd3 package may be of use.
