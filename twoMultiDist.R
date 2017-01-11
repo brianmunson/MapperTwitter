@@ -16,6 +16,7 @@ twoMultiDist <- function(a,b){
 #   distance between a and b
 
 # handles multiple occurences of a value nicely.
+# essentially a multi-set version of length of intersection
 # is slow, however, and not clearly an upgrade over the simpler
 # twoDist in functionality.
 # aOverI: all values of a (including repeats) that appear in a.

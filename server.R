@@ -18,6 +18,7 @@ source("vertexSelector.R")
 source("chebyFilter.R")
 source("jacDist.R")
 source("twoDist.R")
+source("twoMultiDist.R")
 source("distMatrix.R")
 source("hashSelector.R") # has a "subset" "intersect" option, implement for user?
 source("streamRHashTweetVec.R")
@@ -35,7 +36,12 @@ twitter_df <- read.csv("twitter_sample.csv", header = TRUE,
 tweetsHashList <- streamRHashTweetVec(twitter_df)
 topHashes <- hashTopNList(tweetsHashList, 20)
 hashSelected <- hashSelector(tweetsHashList, topHashes[[1]], method = "subset")
+data <- twitter_df[hashSelected[[2]], ]
+# subsets the original data frame so that it may be used by mapper.
+hashVecList <- hashSelected[[1]]
 
+# gives a list vectors of hashtags of length number of rows in data,
+# entries are the hashtags associated with a given tweet, filtered.
 
 # except for the reading of the .csv, most (all?) of the above processing
 # should be done outside of this app. for example, even though
@@ -47,21 +53,15 @@ hashSelected <- hashSelector(tweetsHashList, topHashes[[1]], method = "subset")
 # this could be easily filtered. In fact, the hashTopNList basically
 # does this already.
 
-
-# is this the right function, or is it streamRHashTweetList?
-hashVecList <- ???????????????
-# needs to be processed
-
 # Define server logic
 shinyServer(function(input, output) {
     distMat <- reactive({
-        dist_obj <- distMatrix(input$metric, hashVecList)
-        # hashVecList needs to be processed from the data
+        dist_obj <- distMatrix(get(input$metric), hashVecList)
     })
     
     filterObj <- reactive({
         if(input$filter %in% colnames(data)){
-            filter_obj <- data[,input$filter]
+            filter_obj <- log(data[,input$filter] + 1)
             # perhaps variance normalize?
         }
         else{
@@ -101,18 +101,29 @@ shinyServer(function(input, output) {
         else{
             cheby_filter <- chebyFilter(distMat())
             density_vec <- densMapperVec(mapperObj(), cheby_filter)
+            # currently unimplemented
         }
-        color_function <- colorPaletteList(input$coloring) #colorRampPalette(c("red", "orange", "yellow", "green", "blue", "purple"))
+        color_function <- colorPaletteList(input$coloring)
         colors <- color_function(mapperObj()$num_vertices)
         colors <- paste0("'", paste(colors, collapse = "', '"), "'")
         mapper_d3$nodes['density'] <- density_vec
         # colorings. density determines color.
+        hashtags_in_vertex <- lapply(mapperObj()$points_in_vertex, function(v) { unique(unlist(hashVecList[v])) })
+        hashtag_vec <- sapply(sapply(hashtags_in_vertex, as.character), paste0, collapse=", ")
+        hashtags <- paste0("V", 1:mapperObj()$num_vertices, ": ", hashtag_vec)
+        mapper_d3$nodes['hashtags'] = hashtags
+        # hashtags to appear on hover.
         forceNetwork(Links = mapper_d3$links, Nodes = mapper_d3$nodes, 
                      Source = 'source', Target = 'target', 
-                     NodeID = 'name', Group = 'density',
-                     charge = -400, linkDistance = 15, legend = TRUE,
+                     NodeID = 'hashtags', Group = 'density',
+                     charge = -200, linkDistance = 10, legend = FALSE,
                      Nodesize = 'size', opacity = 0.85, fontSize = 12, 
                      colourScale = networkD3::JS(paste0('d3.scale.ordinal().domain([0,', mapperObj()$num_vertices, ']).range([', colors, '])')))
                      
     })
-    # try to cut down amount of code in renderForceNetwork
+})
+
+# try to cut down amount of code in renderForceNetwork
+# something is weird about the legend for the colors. it looks like
+# it always has a 0 to number of vertices as part of the lowest color
+# band. may have to investigate the javascript a bit closer for this.

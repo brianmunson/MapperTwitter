@@ -8,7 +8,8 @@ streamRHashTweetVec <- function(parsedTweets){
 #   A data frame of parsed tweets, the output of streamR's
 #   parseTweets function.
 # Returns:
-#   ???
+#   A list of length equal to the number of tweets whose elements
+#   are a vector of the hashtags used in that tweet, possibly empty
 
 ########## confusion over proper function
 # streamRHashTweetList <- function(parsedTweets, index){

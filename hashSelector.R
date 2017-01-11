@@ -2,12 +2,12 @@
 # any elements of a given set
 hashSelector <- function(hashTweetsList, hashVec, method="intersect"){
     if(method=="intersect"){
-        boolHashSelect <- sapply(hashTweetsList, function(x){ length(intersect(x,hashVec)) !=0 })
+        boolHashSelect <- vapply(hashTweetsList, function(x){ length(intersect(x,hashVec)) !=0 }, logical(1))
         hashTweetsTrue <- hashTweetsList[boolHashSelect]
         # alternately: hashTweetsTrue <- Filter(function(x){ length(intersect(x,hashVec)) !=0 }, hashTweetsList)
     }
     if(method=="subset"){
-        boolHashSelect <- sapply(hashTweetsList, function(x){ all(x %in% hashVec) && length(x) != 0})
+        boolHashSelect <- vapply(hashTweetsList, function(x){ all(x %in% hashVec) && length(x) != 0}, logical(1))
         hashTweetsTrue <- hashTweetsList[boolHashSelect]
     }
     hashTweetsSelected <- list(hashTweetsTrue, boolHashSelect)
@@ -27,6 +27,13 @@ hashSelector <- function(hashTweetsList, hashVec, method="intersect"){
 # Obvious intended use: list of hashtags whose entries are character
 # vectors, vector of hashtags of interest (e.g. top 10, etc.). Use
 # Boolean vector to subset other filters.
+
+# vapply instead of sapply (older version). for one, vapply is faster
+# since you know the output will be a vector of Booleans in advance.
+# you have to add the logica(1) argument. Part of the issue I was
+# having was that sapply would sometimes return a vector of Booleans
+# and sometimes a vector of Booleans as strings. They behave differently
+# when using them for subsetting.
 
 # More restrictive "subset" version: require the hashtags in a tweet list item
 # to be a nonempty subset of hashVec. in this case change anonymous function to
