@@ -30,18 +30,16 @@ source("hashTopNList.R")
 
 ### choosing a data set with a drop-down menu
 data_sets <- dir("data/", pattern = ".csv") # a list of .csv files available
-
-# this code belongs in a reactive expression
-# output$choose_dataset <- renderUI({
-#     selectInput("dataset", "Data set", as.list(data_sets))
-# })
-# twitter_df <- read.csv(file=file.path("data", input$dataset), header = TRUE,
-#                        as.is = TRUE, fileEncoding="latin1")
+output$choose_dataset <- renderUI({
+    selectInput("dataset", "Data set", as.list(data_sets))
+})
+twitter_df <- read.csv(file=file.path("data", input$dataset), header = TRUE,
+                       as.is = TRUE, fileEncoding="latin1")
     
 
 ###
-twitter_df <- read.csv(file=file.path("data", "twitter_sample.csv"), header = TRUE,
-                       as.is = TRUE, fileEncoding="latin1")
+# twitter_df <- read.csv(file=file.path("data", "twitter_sample.csv"), header = TRUE,
+#                        as.is = TRUE, fileEncoding="latin1")
 # all data will be in relative path.
 # above file is a sample of tweetsAConcat from twitterHashProject
 # will have to write separate code to ingest and process it to 
@@ -87,27 +85,6 @@ hashVecList <- hashSelected[[1]]
 
 # Define server logic
 shinyServer(function(input, output) {
-    # output$choose_dataset <- reactive({
-    #     selectInput("dataset", "Data set", as.list(data_sets))
-    # })
-    # 
-    # twitter_df <- reactive({
-    #     read.csv(file=file.path("data", input$dataset), header = TRUE,
-    #              as.is = TRUE, fileEncoding="latin1")
-    # })
-    # 
-    # data <- reactive({
-    #     tweetsHashList <- streamRHashTweetVec(twitter_df)
-    #     topHashes <- hashTopNList(tweetsHashList, 20)
-    #     hashSelected <- hashSelector(tweetsHashList, topHashes[[1]], method = "subset")
-    #     data <- twitter_df[hashSelected[[2]], ]
-    #     # subsets the original data frame so that it may be used by mapper.
-    #     hashVecList <- hashSelected[[1]]
-    #  })
-    # hashVecList <- reactive({
-    #     hashSelected[[1]]
-    # })
-    
     distMat <- reactive({
         dist_obj <- distMatrix(get(input$metric), hashVecList)
     })

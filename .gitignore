@@ -37,6 +37,9 @@ vignettes/*.pdf
 *.utf8.md
 *.knit.md
 
+# Shiny/shinyapps.io
+rsconnect/**
+
 ######## For Python ####
 
 # Byte-compiled / optimized / DLL files
