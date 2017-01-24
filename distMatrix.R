@@ -9,6 +9,8 @@ distMatrix <- function(metric, hashVecList){
             distMat[j,i] <- distMat[i,j]
         }
     }
+    diag(distMat) <- 0
+    # some of our "metrics" push equal things apart to avoid clustering errors
     return(distMat)
 }
 # Computes distance matrix for a list under a given metric

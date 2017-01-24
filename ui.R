@@ -4,6 +4,7 @@ require(shiny)
 # require(RColorBrewer)
 require(shinythemes)
 require(networkD3)
+require(ggplot2)
 require(markdown)
 
 navbarPage("twitterMapper",
@@ -12,46 +13,103 @@ navbarPage("twitterMapper",
                       sidebarPanel(
                           tags$head(tags$style("#graph{height:100vh !important;}")),
                           # for getting the plot to take up more of the page.
-                          # h4("Data Set"),
+                          h4("Data Set"),
+                          selectInput("dataset", "Choose a dataset:", 
+                                      choices = c("Election 2016" = "Election2016", 
+                                                  "Inauguration 2017" = "Inauguration2017",
+                                                  "Women's March 2017" = "WomensMarch2017"),
+                                      selected = "Election2016"),
                           # uiOutput("choose_dataset"),
                           h4("Node attributes"),
-                          selectInput("node_size", "Node sizing method",
-                                      c("uniform", "unscaled", "linear", "logarithmic", "square root"),
-                                      selected = "linear"),
-                          selectInput("color_filter", "Color filter",
-                                      c("friends" = "friends_count", "followers" = "followers_count",
-                                        "favorites" = "favourites_count")),
-                          selectInput("coloring", "Color palette", 
-                                      c("Spectral", "Hot", "Cool", "Blue-Red",
-                                        "Blues", "Magenta-Green", "Easter")),
+                          tags$div(title="Nodes sized by number of tweets they contain. Larger means more tweets, except for 'uniform', where all nodes have the same size.",
+                                   selectInput("node_size", "Node sizing method",
+                                               c("uniform", "unscaled", "linear", "logarithmic", "square root"),
+                                               selected = "unscaled")
+                                   ),
+                          tags$div(title="Nodes colored by average of selected attribute by tweeters (eg. friends). Lower in spectrum means fewer, higher means more.",
+                                   selectInput("color_filter", "Color filter",
+                                               c("friends" = "friends_count", "followers" = "followers_count",
+                                                 "favorites" = "favourites_count"))
+                                   ),
+                          tags$div(title="Choose a palette you find pleasing",
+                                   selectInput("coloring", "Color palette", 
+                                               c("Spectral", "Hot", "Cool", "Blue-Red",
+                                                 "Blues", "Magenta-Green", "Easter"))
+                                   ),
+                          
+                          
+                          
                           h4("Metric and filter"),
-                          selectInput("metric", "Metric", 
-                                      c("2-dist" = "twoDist", "2-dist-alt" = "twoDistAlt", "2-multidist" = "twoMultiDist",
-                                        "Jaccard" = "jacDist")),
-                          selectInput("filter", "Filter", 
-                                      c("friends" = "friends_count", "followers" = "followers_count",
-                                        "favorites" = "favourites_count")),
+                          tags$div(title="The metric determines the distance between tweets by the hashtags they share.",
+                                   selectInput("metric", "Metric", 
+                                               c("2-dist" = "twoDist", "2-dist-alt" = "twoDistAlt", "2-multidist" = "twoMultiDist",
+                                                 "Jaccard" = "jacDist"))
+                                   ),
+                          tags$div(title="The filter function determines initial groupings of the data before they are clustered into the nodes in the graph. Similar filter values (eg. friends) tends to put data points into the same groupings.",
+                                   selectInput("filter", "Filter function", 
+                                               c("friends" = "friends_count", "followers" = "followers_count",
+                                                 "favorites" = "favourites_count"))
+                                   ),
+                          
                           h4("Mapper parameters"),
-                          sliderInput("num_intervals", "Number of intervals",
-                                      min = 2, max = 50, value = 20, step = 2),
-                          sliderInput("percent_overlap", "Percent overlap of intervals",
-                                      min = 10, max = 50, value = 50, step = 5),
-                          sliderInput("num_bins_when_clustering", "Number of bins for clustering",
-                                      min = 2, max = 30, value = 10, step = 2),
+                          tags$div(title="The number of initial groupings, grouped by the filter function.",
+                                   sliderInput("num_intervals", "Number of intervals",
+                                               min = 2, max = 50, value = 18, step = 2)
+                                   ),
+                          tags$div(title="The percent overlap between the groupings. Higher numbers tend to create graphs with more edges.",
+                                   sliderInput("percent_overlap", "Percent overlap of intervals",
+                                               min = 10, max = 50, value = 50, step = 5)
+                                   ),
+                          tags$div(title="Once grouped, the data points are clustered. This number helps determine a partial clustering. Higher numbers tend to produce more clusters.",
+                                   sliderInput("num_bins_when_clustering", "Number of bins for clustering",
+                                               min = 2, max = 30, value = 10, step = 2)
+                                   ),
+                                   
                           width = 3
                           
                       ),
-                      # Show a plot of the generated distribution
+                      
                       mainPanel(
                           forceNetworkOutput("graph")
                       )
                           # forceNetworkOutput("graph")
                           )
-                      ), 
+                      ),
+         tabPanel("Hashtag wordcloud",
+                  plotOutput("hashcloud", height = 500, width = 1000),
+                  fluidRow(
+                      column(12,align = "center",
+                             sliderInput("freq", "Minimum proportion %",
+                                         min = 0.5, max = 20, value = 2, step = 0.5))
+                  )
+                  
+                  # sidebarLayout(
+                  #     sidebarPanel(
+                  #         h4("Hashtag proportion"),
+                  #         sliderInput("freq","Minimum proportion %",
+                  #                     min = 1, max = 20, value = 3, step = 1)
+                  #         ),
+                  #     mainPanel(
+                  #         plotOutput("hashcloud")
+                  #     )
+                  # )
+                  ),
+         tabPanel("K-medioids clustering",
+                  plotOutput("clusterplot", height=500, width=1000),
+                  fluidRow(
+                      column(12,align = "center",
+                             sliderInput("num_clusters", "Number of clusters",
+                                         min = 2, max = 10, value = 2, step = 1))
+                  )
+         ),
          tabPanel("About",
-                  includeMarkdown("about.md"))
-         ,theme = "bootstrap.css")
+                  includeMarkdown("about.md")),
+         tabPanel("Election 2016 data",
+                  includeMarkdown("electiondata.md")),
+         
+         theme = "bootstrap.css")
 
+# pre-Navbar setup
 # shinyUI(fluidPage(theme = "bootstrap.css",
 #     # does not seem to work when choosing colourScale
 #     titlePanel("twitterMapper"),

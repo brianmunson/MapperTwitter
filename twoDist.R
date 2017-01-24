@@ -17,3 +17,6 @@ twoDist <- function(a,b){
 # 0 <= d(a,b) < 1
 # if a and b have non-empty intersection, d(a,b) < 1/2
 # if a and b have empty intersection, not both empty, d(a,b) >= 1/2
+# issues:
+# different points can have distance zero. this can create an error with
+# the cluster_cutoff_at_first_empty_bin function called upon in TDAmapper.

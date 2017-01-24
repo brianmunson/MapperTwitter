@@ -1,16 +1,23 @@
-require(TDAmapper)
+# require(TDAmapper) # omit until cluster_cutoff_at_first_empty_bin is fixed
+require(cluster)
+require(fastcluster)
 require(igraph)
+require(ggplot2)
 require(shinythemes)
 require(networkD3)
 # require(colorRamps) #necessary?
-# require(RColorBrewer) #necessary?
+require(RColorBrewer) #necessary?
 require(ROAuth)
 require(twitteR) # may not need
 require(httr)
 require(streamR)
 require(stringr) # may not need
 # for twitter and parsing strings
+require(wordcloud)
 
+source("mapper1D.R") #temp until TDAmapper updated
+source("cluster_cutoff_at_first_empty_bin.R") # temp until TDAmapper updated. This function needed editing to fix an error.
+#
 source("nodeSizer.R")
 source("densMapperVec.R")
 source("colorPaletteList.R")
@@ -26,60 +33,61 @@ source("streamRHashTweetVec.R")
 source("streamRHashTweetList.R")
 source("hashTweetList.R")
 source("hashTopNList.R")
+source("tweetsData.R")
 
 
 ### choosing a data set with a drop-down menu
-data_sets <- dir("data/", pattern = ".csv") # a list of .csv files available
+#data_sets <- dir("data/", pattern = ".csv") # a list of .csv files available
+# does not appear to work correctly.
 
-# this code belongs in a reactive expression
-# output$choose_dataset <- renderUI({
-#     selectInput("dataset", "Data set", as.list(data_sets))
-# })
-# twitter_df <- read.csv(file=file.path("data", input$dataset), header = TRUE,
-#                        as.is = TRUE, fileEncoding="latin1")
-    
-
+### trying to get multiple datasets working
+#
+Elec2016 <- read.csv(file=file.path("data", "Election2016.csv"), header = TRUE,
+                                                as.is = TRUE, fileEncoding="latin1")
+Election2016 <- tweetsData(Elec2016)
+Inaug2017 <- read.csv(file=file.path("data", "Inauguration2017.csv"), header = TRUE,
+                                                    as.is = TRUE, fileEncoding="latin1")
+Inauguration2017 <- tweetsData(Inaug2017)
+WomMarch2017 <- read.csv(file=file.path("data", "WomensMarch2017.csv"), header = TRUE,
+                                                as.is = TRUE, fileEncoding="latin1")
+WomensMarch2017 <- tweetsData(WomMarch2017)
+#
 ###
-twitter_df <- read.csv(file=file.path("data", "twitter_sample.csv"), header = TRUE,
-                       as.is = TRUE, fileEncoding="latin1")
-# all data will be in relative path.
-# above file is a sample of tweetsAConcat from twitterHashProject
-# will have to write separate code to ingest and process it to 
-# a nice csv which will read in as a data frame.
-# fileEncoding = "latin1" seems to help prevent 
-# "invalid multibyte string" errors.
 
-tweetsHashList <- streamRHashTweetVec(twitter_df)
-topHashes <- hashTopNList(tweetsHashList, 20)
-hashSelected <- hashSelector(tweetsHashList, topHashes[[1]], method = "subset")
-data <- twitter_df[hashSelected[[2]], ]
-# subsets the original data frame so that it may be used by mapper.
-hashVecList <- hashSelected[[1]]
-
-## future: would like a way to select a .csv.
-# probably reactive, probably use list.files()
-
-# tweets_df <- read.csv(file=file.path("data", "placeholder.csv"),
-#                       header = TRUE, as.is = TRUE, fileEncoding = "latin1")
-# hashtags <- tweets_df$hashtags
-# tweetsHashList <- sapply(hashtags, function(x){ strsplit(x, split = " ") })
+### when all else fails, this will produce the right thing
+# it is the same as the next block, which uses a function to do this stuff.
+#
+# twitter_df <- read.csv(file=file.path("data", "Election2016.csv"), header = TRUE,
+#                      as.is = TRUE, fileEncoding="latin1")
+# 
+# # all data will be in relative path.
+# # above file is a sample of tweetsAConcat from twitterHashProject
+# # fileEncoding = "latin1" to help prevent "invalid multibyte string" errors
+# 
+# tweetsHashList <- streamRHashTweetVec(twitter_df)
 # topHashes <- hashTopNList(tweetsHashList, 20)
-# boolSelectedTweets <- vapply(tweetsHashList, function(x){ length(intersect(x,topHashes[[1]])) !=0 }, logical(1))
-# data <- tweets_df[boolSelectedTweets, ]
-# hashVecList <- tweetsHashList[boolHashSelect]
+# hashSelected <- hashSelector(tweetsHashList, topHashes[[1]], method = "subset")
+# data <- twitter_df[hashSelected[[2]], ]
+# # subsets the original data frame so that it may be used by mapper.
+# hashVecList <- hashSelected[[1]]
+###
 
-# takes a really long time to compute the distance matrix for this hashVecList,
-# much longer than with the above. why?
-##
-
-# gives a list vectors of hashtags of length number of rows in data,
-# entries are the hashtags associated with a given tweet, filtered.
+### trying out new tweetsData function which does the above steps (works)
+# 
+# twitter_df <- read.csv(file=file.path("data", "Election2016.csv"), header = TRUE,
+#                      as.is = TRUE, fileEncoding="latin1")
+# twitter_data <- tweetsData(twitter_df)
+# data <- twitter_data$df
+# hashVecList <- twitter_data$hashvec
+# 
+###
 
 # except for the reading of the .csv, most (all?) of the above processing
 # should be done outside of this app. for example, even though
 # hashSelector takes a method argument, you could still allow the user
 # to utilize it by doing all possible computations ahead of time
-# and then allowing them to choose between already computed data.
+# and then allowing them to choose between already computed data. this would
+# increase loading time but make the app faster once it loads.
 # for instance, for the topnhashes, you could add another data frame
 # to load in which simply has the hashtags and their frequencies.
 # this could be easily filtered. In fact, the hashTopNList basically
@@ -87,38 +95,38 @@ hashVecList <- hashSelected[[1]]
 
 # Define server logic
 shinyServer(function(input, output) {
-    # output$choose_dataset <- reactive({
-    #     selectInput("dataset", "Data set", as.list(data_sets))
-    # })
-    # 
-    # twitter_df <- reactive({
-    #     read.csv(file=file.path("data", input$dataset), header = TRUE,
-    #              as.is = TRUE, fileEncoding="latin1")
-    # })
-    # 
-    # data <- reactive({
-    #     tweetsHashList <- streamRHashTweetVec(twitter_df)
-    #     topHashes <- hashTopNList(tweetsHashList, 20)
-    #     hashSelected <- hashSelector(tweetsHashList, topHashes[[1]], method = "subset")
-    #     data <- twitter_df[hashSelected[[2]], ]
-    #     # subsets the original data frame so that it may be used by mapper.
-    #     hashVecList <- hashSelected[[1]]
-    #  })
-    # hashVecList <- reactive({
-    #     hashSelected[[1]]
-    # })
+    
+    # # # trying to get multiple data sets working
+
+    twitterData <- reactive({
+        twitter_data_list <- get(input$dataset)
+    })
+
+    data <- reactive({
+        tweets_df <- twitterData()$df
+    })
+
+    hashVecList <- reactive({
+        hash_vec_list <- twitterData()$hashvec
+    })
+
+    distMat <- reactive({
+        dist_obj <- distMatrix(get(input$metric), hashVecList())
+    })
+
+    # # #
     
     distMat <- reactive({
-        dist_obj <- distMatrix(get(input$metric), hashVecList)
+        dist_obj <- distMatrix(get(input$metric), hashVecList())
     })
     
     filterObj <- reactive({
-        if(input$filter %in% colnames(data)){
-            filter_obj <- log(data[,input$filter] + 1)
+        if(input$filter %in% colnames(data())){
+            filter_obj <- log(data()[,input$filter] + 1)
             # perhaps variance normalize?
         }
         else{
-            filter_obj <- chebyFilter(dist_obj)
+            filter_obj <- chebyFilter(distMat())
         }
     })
     
@@ -129,11 +137,6 @@ shinyServer(function(input, output) {
                                   percent_overlap = input$percent_overlap,
                                   num_bins_when_clustering = input$num_bins_when_clustering)
     })
-    
-    # d3GraphObj <- reactive({
-    #     mapper_graph <- mapperigraphToD3(mapperObj())
-    # })
-    # currently not working
     
     output$graph <- renderForceNetwork({
         mapper_graph <- graph.adjacency(mapperObj()$adjacency, mode = "undirected")
@@ -148,8 +151,8 @@ shinyServer(function(input, output) {
         node_sizes <- nodeSizer(mapperObj(), input$node_size)
         mapper_d3$nodes['size'] = node_sizes
         # node sizing. make optional with selectInput box
-        if(input$color_filter %in% colnames(data)){
-            density_vec <- densMapperVec(mapperObj(), data[,input$color_filter])
+        if(input$color_filter %in% colnames(data())){
+            density_vec <- densMapperVec(mapperObj(), data()[,input$color_filter])
         }
         else{
             cheby_filter <- chebyFilter(distMat())
@@ -161,7 +164,7 @@ shinyServer(function(input, output) {
         colors <- paste0("'", paste(colors, collapse = "', '"), "'")
         mapper_d3$nodes['density'] <- density_vec
         # colorings. density determines color.
-        hashtags_in_vertex <- lapply(mapperObj()$points_in_vertex, function(v) { unique(unlist(hashVecList[v])) })
+        hashtags_in_vertex <- lapply(mapperObj()$points_in_vertex, function(v) { unique(unlist(hashVecList()[v])) })
         hashtag_vec <- sapply(sapply(hashtags_in_vertex, as.character), paste0, collapse=", ")
         hashtags <- paste0("V", 1:mapperObj()$num_vertices, ": ", hashtag_vec)
         mapper_d3$nodes['hashtags'] = hashtags
@@ -174,6 +177,56 @@ shinyServer(function(input, output) {
                      colourScale = networkD3::JS(paste0('d3.scale.ordinal().domain([0,', mapperObj()$num_vertices, ']).range([', colors, '])')))
                      
     })
+    
+    # wordcloud section
+    # for making hashtag wordcloud
+    wordcloud_rep <- repeatable(wordcloud)
+    # makes wordcloud consistent throughout session
+    
+    # topHashDF <- reactive({
+    #     as.data.frame(twitterData()$tophash)
+    # })
+    
+    output$hashcloud <- renderPlot({
+        hashtagcloud <- wordcloud_rep(words = names(twitterData()$tophash),
+                                      freq = 100*twitterData()$tophash/sum(twitterData()$tophash),
+                                      scale = c(5,1),
+                                      min.freq = input$freq,
+                                      colors = colorPaletteList("Azure")(9),
+                                      random.color = FALSE)
+    }, bg = "transparent")
+    
+    kmedioids <- reactive({
+        pam(distMat(), input$num_clusters, cluster.only = TRUE)
+    })
+    
+    clusters <- reactive({
+        factor(kmedioids(), levels=unique(kmedioids()))
+    })
+    
+    output$clusterplot <- renderPlot({
+        qplot(log(followers_count +1), log(friends_count + 1), data=data(), 
+              color= clusters(), xlab="Followers (log-scaled)", ylab="Friends (log-scaled)",
+              main="Followers vs. friends, colored by k-medioids clustering by hashtag distance")
+        
+    })
+    # finding right scale is difficult. too small and it's displeasing, but
+    # too large and some words won't print because they are too large. is
+    # there a way to auto-scale?
+    
+
+    
+    # output$hashcloud <- reactive({
+    #     renderPlot({
+    #         hashtagcloud <- wordcloud_rep(words = names(twitterData()$tophash),
+    #                       freq = 100*twitterData()$tophash/sum(twitterData()$tophash),
+    #                       min.freq = input$freq,
+    #                       colors = brewer.pal(8, "Dark2")
+    #                       )
+    #     })
+    # })
+    # renderPlot does not work in a reactive expression. Maybe it is automatically
+    # reactive, like renderForceNetwork seems to be.
     
 })
 

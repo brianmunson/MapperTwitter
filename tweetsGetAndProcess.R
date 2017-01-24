@@ -82,7 +82,7 @@ tweets_df <- tweets_df[tweets_df$hashtags != ""] #filter those without hashtags
 # hashtags_as_list <- sapply(hashtags, function(x){ strsplit(x, split = " ") })
 # convertes it to a list of vectors, for use with other functions
 
-# cleaning "data" subdirector of older files.
+# cleaning "data" subdirectory of older files.
 now = format(Sys.time(), "%d-%m-%y--%H-%M-%S")
 write.csv(tweets_df, file=sprintf("data/%s_tweets.csv", now), row.names = FALSE)
 
