@@ -1,6 +1,6 @@
 # 2016 Presidential Election Data
 
-To give a sense of how you might use this app, I'll relate a story 
+To give a sense of how you might use this app, I'd like to tell youre a story 
 about what motivated me to publish it in the first place. It is a good 
 demonstration of how Mapper can be used as a data mining tool.
 
@@ -19,23 +19,23 @@ recreate the same graph I did by reloading the app and then continuing to read.
 
 One way to use Mapper to identify features of interest in the data set is to 
 look for "tendrils" in the graph. This particular  graph has several emanating 
-from one largish yellow node in the main "body" of the graph. One tendril stands 
-out because its nodes are a bit larger than those in other similar tendrils, 
-indicating they represent more tweets.
+from one largish yellow-green node in the main "body" of the graph. One tendril 
+stands because it has two branches, and one of those branches has nodes that 
+are slightly larger than nodes in other tendrils.
 
 If you hover over these nodes, you'll see the same three hashtags: #SoundCloud, 
-#TrumpTrain, and #Trump2016. This is strange, the nodes represent tweets which 
+#TrumpTrain, and #Trump2016. This is strange: the nodes represent tweets which 
 are a mix of advertising and political support. Since the nodes are in the 
 orange spectrum, they also represent tweeters with few friends. Now change the 
 color filter to followers, and find the same nodes. They are in a similar color 
 spectrum, which means that they also have few followers. I found it odd that 
 there should be tweets with the same unusual mix of political and advertising 
-content, but from users who have very few friends or followers. I thought it 
-pretty unlikely that they knew one another. 
+content, but from users who have very few friends or followers - it seemed 
+likely they were related in some way.
 
-As it turns out, they probably do know one another, sor of: they are all bots 
-created using the same program. The spambots were easy to identify, because it 
-is possible to select the data from the original data set represented by any 
-node to separate it out and then analyze it directly. While that's not yet 
-possible with the web app, it's easy to do working locally with the TDAmapper 
-package in R which helped create these visualizations.
+They probably are related, sort of: I believe they are all bots 
+created using the same program. They were easy to identify, because it 
+is possible to filter the data by hashtags to separate it, pull profiles on 
+those users using Twitter's REST API, and then do a more detailed analysis. 
+This is easy to do thanks to Paul Pearson's TDAmapper package for R, which 
+helped create these visualizations.

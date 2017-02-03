@@ -7,11 +7,12 @@ colorPaletteList <- function(palette = "Spectral"){
     color_func_mggr <- colorRampPalette(c("magenta", "green"))
     color_func_easter <- colorRampPalette(c("indian red1", "light salmon1", "khaki1", "pale green1", "light blue1", "orchid1"))
     color_func_azure <- colorRampPalette(c("azure1", "azure2", "azure3", "azure4"))
+    color_func_skyblue <- colorRampPalette(c("skyblue1", "skyblue2", "skyblue3", "skyblue4"))
     color_list <- list(color_func_spec, color_func_hot, color_func_cool, 
                        color_func_blrd, color_func_blues, color_func_mggr,
-                       color_func_easter, color_func_azure)
+                       color_func_easter, color_func_azure, color_func_skyblue)
     names(color_list) <- c("Spectral", "Hot", "Cool", "Blue-Red",
-                           "Blues", "Magenta-Green", "Easter", "Azure")
+                           "Blues", "Magenta-Green", "Easter", "Azure", "Skyblue")
     return(color_list[[palette]])
 }
 # A list of color functions for generating palettes to be used with

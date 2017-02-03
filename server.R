@@ -99,7 +99,7 @@ shinyServer(function(input, output) {
     # # # trying to get multiple data sets working
 
     twitterData <- reactive({
-        twitter_data_list <- get(input$dataset)
+        twitter_data_list <- get(isolate(input$dataset))
     })
 
     data <- reactive({
@@ -117,12 +117,12 @@ shinyServer(function(input, output) {
     # # #
     
     distMat <- reactive({
-        dist_obj <- distMatrix(get(input$metric), hashVecList())
+        dist_obj <- distMatrix(get(isolate(input$metric)), hashVecList())
     })
     
     filterObj <- reactive({
         if(input$filter %in% colnames(data())){
-            filter_obj <- log(data()[,input$filter] + 1)
+            filter_obj <- log(data()[,isolate(input$filter)] + 1)
             # perhaps variance normalize?
         }
         else{
@@ -133,12 +133,13 @@ shinyServer(function(input, output) {
     mapperObj <- reactive({
         mapper_object <- mapper1D(distance_matrix = distMat(),
                                   filter_value = filterObj(),
-                                  num_intervals = input$num_intervals,
-                                  percent_overlap = input$percent_overlap,
-                                  num_bins_when_clustering = input$num_bins_when_clustering)
+                                  num_intervals = isolate(input$num_intervals),
+                                  percent_overlap = isolate(input$percent_overlap),
+                                  num_bins_when_clustering = isolate(input$num_bins_when_clustering))
     })
     
     output$graph <- renderForceNetwork({
+        input$mapper_button
         mapper_graph <- graph.adjacency(mapperObj()$adjacency, mode = "undirected")
         wc <- cluster_walktrap(mapper_graph)
         members <- membership(wc)
@@ -160,8 +161,10 @@ shinyServer(function(input, output) {
             # currently unimplemented
         }
         color_function <- colorPaletteList(input$coloring)
-        colors <- color_function(mapperObj()$num_vertices)
-        colors <- paste0("'", paste(colors, collapse = "', '"), "'")
+        colors <- color_function(mapperObj()$num_vertices) # vector of hex characters for 
+        # colors, e.g. "#FF0000" "#FF1500" #FF2A00" ...
+        colors <- paste0("'", paste(colors, collapse = "', '"), "'") # a string of the 
+        # above, e.g. " '#FF000', '#FF1500', '#FF2A00', ... "
         mapper_d3$nodes['density'] <- density_vec
         # colorings. density determines color.
         hashtags_in_vertex <- lapply(mapperObj()$points_in_vertex, function(v) { unique(unlist(hashVecList()[v])) })
@@ -172,9 +175,10 @@ shinyServer(function(input, output) {
         forceNetwork(Links = mapper_d3$links, Nodes = mapper_d3$nodes, 
                      Source = 'source', Target = 'target', 
                      NodeID = 'hashtags', Group = 'density',
-                     charge = -200, linkDistance = 10, legend = FALSE,
+                     charge = -150, linkDistance = 10, legend = FALSE,
                      Nodesize = 'size', opacity = 0.85, fontSize = 12, 
-                     colourScale = networkD3::JS(paste0('d3.scale.ordinal().domain([0,', mapperObj()$num_vertices, ']).range([', colors, '])')))
+                     zoom = TRUE, 
+                     colourScale = JS(paste0('d3.scale.ordinal().domain([0,', mapperObj()$num_vertices, ']).range([', colors, '])')))
                      
     })
     
@@ -192,11 +196,11 @@ shinyServer(function(input, output) {
                                       freq = 100*twitterData()$tophash/sum(twitterData()$tophash),
                                       scale = c(5,1),
                                       min.freq = input$freq,
-                                      colors = colorPaletteList("Azure")(9),
+                                      colors = colorPaletteList("Skyblue")(8),
                                       random.color = FALSE)
     }, bg = "transparent")
     
-    kmedioids <- reactive({
+    kmedioids <- eventReactive(input$go_clust, { 
         pam(distMat(), input$num_clusters, cluster.only = TRUE)
     })
     
@@ -207,7 +211,7 @@ shinyServer(function(input, output) {
     output$clusterplot <- renderPlot({
         qplot(log(followers_count +1), log(friends_count + 1), data=data(), 
               color= clusters(), xlab="Followers (log-scaled)", ylab="Friends (log-scaled)",
-              main="Followers vs. friends, colored by k-medioids clustering by hashtag distance")
+              main="Tweets plotted by followers vs. friends\n Colored by cluster")
         
     })
     # finding right scale is difficult. too small and it's displeasing, but
