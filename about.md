@@ -59,7 +59,7 @@ number of tweets they contain. Edges are drawn between nodes which share tweets.
 a node will show the hashtags used by tweets in that node.Tweets also represent the users that made 
 them. The color of each node corresponds with the relative density of the trait in the "color filter" 
 option. For example, using the "Spectral" coloring option with "friends" as the color filter, warmer 
-colors represent users with a lower average friend count as compared to other users in the data set.
+colors represent users with a higher average friend count as compared to other users in the data set.
 
 The graph is highly interactive and customizable. You can zoom and drag the graph, and move nodes 
 around as you please. There are three main tabs of choices for altering the graph or its appearance.
@@ -78,4 +78,12 @@ The third tab, "Nodes", has choices which only alter the appearance of the graph
 methods except "uniform" make larger nodes for more tweets. The color palette choices are present for 
 aesthetic reasons. The most useful choice here is the color filter, as it can give a sense of both how 
 the graph was formed (if the color filter is the same as the filter), and also gives a sense of how 
-various attributes change throughout the graph.
+various attributes change throughout the graph. The Viridis and Magma choices, from the viridis package, 
+are colorblind friendly choices.
+
+### About the app
+
+The app reads its data from .csv files on an Amazon S3 bucket. A Python script, hosted on Heroku, 
+periodically gets U.S. Twitter trends, opens a stream following those trends, and then writes the resulting 
+data to a .csv on that same bucket so it can be read by the twitterMapper app. Most of these files are deleted 
+after one week, however, some data, such as the election data, has been preserved beyond this timeframe.

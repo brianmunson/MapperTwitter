@@ -30,7 +30,7 @@ hashSelector <- function(hashTweetsList, hashVec, method="intersect"){
 
 # vapply instead of sapply (older version). for one, vapply is faster
 # since you know the output will be a vector of Booleans in advance.
-# you have to add the logica(1) argument. Part of the issue I was
+# you have to add the logical(1) argument. Part of the issue I was
 # having was that sapply would sometimes return a vector of Booleans
 # and sometimes a vector of Booleans as strings. They behave differently
 # when using them for subsetting.

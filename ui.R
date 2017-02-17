@@ -2,24 +2,48 @@ require(shiny)
 # require(TDAmapper)
 # require(igraph)
 # require(RColorBrewer)
+require(viridis)
 require(shinythemes)
 require(networkD3)
 require(ggplot2)
 require(markdown)
+require(aws.s3)
+
+# can you do this in the ui?
+bucket <- get_bucket(bucket = Sys.getenv("AWS_TWITTER_BUCKET"), key = Sys.getenv("AWS_ACCESS_KEY_ID"), secret = Sys.getenv("AWS_SECRET_ACCESS_KEY"))
+bucket_files <- sapply(seq(1:length(bucket)), function(x){ bucket[x]$Contents$Key })
+bucket_files_list <- as.list(bucket_files)
+names(bucket_files_list) <- bucket_files
 
 navbarPage("twitterMapper",
-           tabPanel("About",
-                    includeMarkdown("about.md")),
+           navbarMenu("About",
+                      tabPanel("App",
+                               includeMarkdown("aboutapp.md")
+                               ),
+                      tabPanel("Math",
+                               includeMarkdown("aboutmath.md")
+                               ),
+                      tabPanel("Author",
+                               includeMarkdown("aboutauthor.md")
+                               ),
+                      tabPanel("Election 2016",
+                               includeMarkdown("aboutelection.md")
+                               )
+                      ),
+           
            tabPanel("Graph",
                   # sidebarLayout(
                       sidebarPanel(
                           tabsetPanel(tabPanel("Data",
                                                h4("Data, metric, and filter"),
                                                selectInput("dataset", "Choose a dataset:", 
-                                                           choices = c("Election 2016" = "Election2016", 
-                                                                       "Inauguration 2017" = "Inauguration2017",
-                                                                       "Women's March 2017" = "WomensMarch2017"),
-                                                           selected = "Election2016"),
+                                                           choices = bucket_files_list
+# 
+#                                                             choices = c("Election 2016" = "Election2016",
+#                                                                         "Inauguration 2017" = "Inauguration2017",
+#                                                                         "Women's March 2017" = "WomensMarch2017"),
+#                                                             selected = "Election2016"
+                                                           ),
                                                # uiOutput("choose_dataset"),
                                                # h4("Metric"),
                                                tags$div(title="The metric determines the distance between tweets by the hashtags they share.",
@@ -63,8 +87,8 @@ navbarPage("twitterMapper",
                                                ),
                                                tags$div(title="Choose a palette you find pleasing",
                                                         selectInput("coloring", "Color palette", 
-                                                                    c("Spectral", "Hot", "Cool", "Blue-Red",
-                                                                      "Blues", "Magenta-Green", "Easter"))
+                                                                    c("Spectral", "Viridis", "Magma", "Hot", "Cool",
+                                                                      "Blues", "Easter", "Grayscale"))
                                                )
                                       ), selected="Nodes"),
                           
@@ -121,10 +145,10 @@ navbarPage("twitterMapper",
                              actionButton("go_clust", "Create plot"))
                   )
          ),
-         tabPanel("Election 2016 data",
-                  includeMarkdown("electiondata.md")),
-         tabPanel("About the author",
-                  includeMarkdown("authorabout.md")),
+         # tabPanel("Election 2016 data",
+         #          includeMarkdown("electiondata.md")),
+         # tabPanel("About the author",
+         #          includeMarkdown("authorabout.md")),
          
          theme = "bootstrap.css")
 

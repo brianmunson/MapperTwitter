@@ -1,5 +1,5 @@
 colorPaletteList <- function(palette = "Spectral"){
-    color_func_spec <- colorRampPalette(c("red", "orange", "yellow", "green", "blue", "purple"))
+    color_func_spec <- colorRampPalette(c("red", "orange", "yellow", "green", "cyan", "blue"))
     color_func_hot <- colorRampPalette(c("red", "orange", "yellow"))
     color_func_cool <- colorRampPalette(c("green", "blue", "purple"))
     color_func_blrd <- colorRampPalette(c("blue", "red"))
@@ -8,11 +8,16 @@ colorPaletteList <- function(palette = "Spectral"){
     color_func_easter <- colorRampPalette(c("indian red1", "light salmon1", "khaki1", "pale green1", "light blue1", "orchid1"))
     color_func_azure <- colorRampPalette(c("azure1", "azure2", "azure3", "azure4"))
     color_func_skyblue <- colorRampPalette(c("skyblue1", "skyblue2", "skyblue3", "skyblue4"))
+    color_func_grayscale <- colorRampPalette(c("gray90", "gray70", "gray50", "gray30", "gray10"))
+    color_func_viridis <- viridis
+    color_func_magma <- magma
+    # last two from the viridis package
     color_list <- list(color_func_spec, color_func_hot, color_func_cool, 
                        color_func_blrd, color_func_blues, color_func_mggr,
-                       color_func_easter, color_func_azure, color_func_skyblue)
+                       color_func_easter, color_func_azure, color_func_skyblue, 
+                       color_func_grayscale, color_func_viridis, color_func_magma)
     names(color_list) <- c("Spectral", "Hot", "Cool", "Blue-Red",
-                           "Blues", "Magenta-Green", "Easter", "Azure", "Skyblue")
+                           "Blues", "Magenta-Green", "Easter", "Azure", "Skyblue", "Grayscale", "Viridis", "Magma")
     return(color_list[[palette]])
 }
 # A list of color functions for generating palettes to be used with

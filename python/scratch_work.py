@@ -119,6 +119,9 @@ if __name__ == '__main__':
 # a slightly more complex listener
 class StdOutListener(StreamListener):
     """ handles data received from the stream """
+    def __init__(self, api=None):
+        super(StdOutListener, self).__init__()
+        self.num_tweets = 0
 
     def on_status(self, status):
         # prints text of tweet
@@ -126,6 +129,7 @@ class StdOutListener(StreamListener):
             print("Tweet text "+ status.text)
             print('\n %s %s via %s\n', (status.author.screen_name, status.created_at,
             status.source))
+            self.num_tweets += 1
         except:
             # ignore printing errors to console
             pass

@@ -5,6 +5,7 @@ mapperigraphToD3.R
 # History files
 .Rhistory
 .Rapp.history
+.Renviron
 
 # Session Data files
 *.RData

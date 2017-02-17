@@ -7,6 +7,7 @@ require(shinythemes)
 require(networkD3)
 # require(colorRamps) #necessary?
 require(RColorBrewer) #necessary?
+require(viridis)
 require(ROAuth)
 require(twitteR) # may not need
 require(httr)
@@ -14,6 +15,7 @@ require(streamR)
 require(stringr) # may not need
 # for twitter and parsing strings
 require(wordcloud)
+require(aws.s3)
 
 source("mapper1D.R") #temp until TDAmapper updated
 source("cluster_cutoff_at_first_empty_bin.R") # temp until TDAmapper updated. This function needed editing to fix an error.
@@ -35,6 +37,18 @@ source("hashTweetList.R")
 source("hashTopNList.R")
 source("tweetsData.R")
 
+## amazon s3 bucket stuff
+
+# below better in ui? b/c that's where list of files should appear
+bucket <- get_bucket(bucket = Sys.getenv("AWS_TWITTER_BUCKET"), key = Sys.getenv("AWS_ACCESS_KEY_ID"), secret = Sys.getenv("AWS_SECRET_ACCESS_KEY"))
+bucket_files <- sapply(seq(1:length(bucket)), function(x){ bucket[x]$Contents$Key })
+files_raw <- lapply(bucket_files, function(x){ get_object(x, bucket = Sys.getenv("AWS_TWITTER_BUCKET"), key = Sys.getenv("AWS_ACCESS_KEY_ID"), secret = Sys.getenv("AWS_SECRET_ACCESS_KEY")) })
+files_df <- lapply(files_raw, function(x){ read.csv(text=rawToChar(x), header=TRUE, as.is = TRUE, fileEncoding = "latin1") })
+files_data <- lapply(files_df, function(x){ tweetsData(x) })
+names(files_data) <- bucket_files
+
+# files_df is a list whose elements are the data frames we allow the user to 
+# use as input for mapper. these are the same names that appear in the ui
 
 ### choosing a data set with a drop-down menu
 #data_sets <- dir("data/", pattern = ".csv") # a list of .csv files available
@@ -42,15 +56,15 @@ source("tweetsData.R")
 
 ### trying to get multiple datasets working
 #
-Elec2016 <- read.csv(file=file.path("data", "Election2016.csv"), header = TRUE,
-                                                as.is = TRUE, fileEncoding="latin1")
-Election2016 <- tweetsData(Elec2016)
-Inaug2017 <- read.csv(file=file.path("data", "Inauguration2017.csv"), header = TRUE,
-                                                    as.is = TRUE, fileEncoding="latin1")
-Inauguration2017 <- tweetsData(Inaug2017)
-WomMarch2017 <- read.csv(file=file.path("data", "WomensMarch2017.csv"), header = TRUE,
-                                                as.is = TRUE, fileEncoding="latin1")
-WomensMarch2017 <- tweetsData(WomMarch2017)
+# Elec2016 <- read.csv(file=file.path("data", "Election2016.csv"), header = TRUE,
+#                                                 as.is = TRUE, fileEncoding="latin1")
+# Election2016 <- tweetsData(Elec2016)
+# Inaug2017 <- read.csv(file=file.path("data", "Inauguration2017.csv"), header = TRUE,
+#                                                     as.is = TRUE, fileEncoding="latin1")
+# Inauguration2017 <- tweetsData(Inaug2017)
+# WomMarch2017 <- read.csv(file=file.path("data", "WomensMarch2017.csv"), header = TRUE,
+#                                                 as.is = TRUE, fileEncoding="latin1")
+# WomensMarch2017 <- tweetsData(WomMarch2017)
 #
 ###
 
@@ -98,8 +112,12 @@ shinyServer(function(input, output) {
     
     # # # trying to get multiple data sets working
 
+    # twitterData <- reactive({
+    #     twitter_data_list <- get(input$dataset) # get(isolate(input$dataset))
+    # })
+    
     twitterData <- reactive({
-        twitter_data_list <- get(isolate(input$dataset))
+        twitter_data_list <- get(input$dataset, files_data) # get(isolate(input$dataset))
     })
 
     data <- reactive({
@@ -163,6 +181,12 @@ shinyServer(function(input, output) {
         color_function <- colorPaletteList(input$coloring)
         colors <- color_function(mapperObj()$num_vertices) # vector of hex characters for 
         # colors, e.g. "#FF0000" "#FF1500" #FF2A00" ...
+        colors <- rev(colors)
+        # this makes "hot" colors mean more, "cool", less.
+        if(nchar(colors[1]) == 9){
+            colors <- gsub("FF$", "", colors)
+        }
+        # the veridis/magma colors don't disply; this is a hack
         colors <- paste0("'", paste(colors, collapse = "', '"), "'") # a string of the 
         # above, e.g. " '#FF000', '#FF1500', '#FF2A00', ... "
         mapper_d3$nodes['density'] <- density_vec
@@ -176,7 +200,7 @@ shinyServer(function(input, output) {
                      Source = 'source', Target = 'target', 
                      NodeID = 'hashtags', Group = 'density',
                      charge = -150, linkDistance = 10, legend = FALSE,
-                     Nodesize = 'size', opacity = 0.85, fontSize = 12, 
+                     Nodesize = 'size', opacity = 0.85, fontSize = 14, 
                      zoom = TRUE, 
                      colourScale = JS(paste0('d3.scale.ordinal().domain([0,', mapperObj()$num_vertices, ']).range([', colors, '])')))
                      

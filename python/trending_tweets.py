@@ -16,7 +16,7 @@ access_token = os.environ.get("TW_ACCESS")
 access_token_secret = os.environ.get("TW_ACCESS_SECRET")
 
 def get_US_Twitter_trends():
-	auth = ty.OAuthHandler(consumer_key, consumer_secret)
+    auth = ty.OAuthHandler(consumer_key, consumer_secret)
     auth.set_access_token(access_token, access_token_secret)
     api = ty.API(auth)
     available = api.trends_available()
