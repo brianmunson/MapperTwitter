@@ -117,25 +117,25 @@ shinyServer(function(input, output) {
     # })
     
     twitterData <- reactive({
-        twitter_data_list <- get(input$dataset, files_data) # get(isolate(input$dataset))
+        get(input$dataset, files_data) # get(isolate(input$dataset))
     })
 
     data <- reactive({
-        tweets_df <- twitterData()$df
+        twitterData()$df
     })
 
     hashVecList <- reactive({
-        hash_vec_list <- twitterData()$hashvec
+        twitterData()$hashvec
     })
 
     distMat <- reactive({
-        dist_obj <- distMatrix(get(input$metric), hashVecList())
+        distMatrix(get(input$metric), hashVecList())
     })
 
     # # #
     
     distMat <- reactive({
-        dist_obj <- distMatrix(get(isolate(input$metric)), hashVecList())
+        distMatrix(get(isolate(input$metric)), hashVecList())
     })
     
     filterObj <- reactive({
